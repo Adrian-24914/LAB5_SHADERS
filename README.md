@@ -2,6 +2,8 @@
 
 Visualizador de cuerpos celestes desarrollado en Rust sobre un **software renderer**. Todos los colores, relieves visuales y patrones se calculan proceduralmente mediante shaders: el proyecto no utiliza texturas, imágenes de superficie ni mapas de materiales.
 
+Exportado desde mi trabajo en el proyecto: [Proyecto 3](https://github.com/bianckaa/gc-proyecto-3/tree/feature/carga-modelos-planetas)
+
 El laboratorio incluye los tres cuerpos requeridos —Sol, planeta rocoso y gigante gaseoso—, dos diseños adicionales —CORE y Droid— y una luna independiente que orbita el planeta rocoso.
 
 ## Ejecución
