@@ -234,7 +234,7 @@ impl App {
                 bounding_radius: SUN_RADIUS,
                 lod: None,
             }];
-            if selection == PlanetSelection::Gas {
+            if selection == PlanetSelection::Rocky {
                 let moon_angle = effect_time * MOON_ORBIT_SPEED;
                 let moon_position = Vec3::new(
                     moon_angle.cos() * MOON_ORBIT_RADIUS,

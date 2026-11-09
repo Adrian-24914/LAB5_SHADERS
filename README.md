@@ -2,7 +2,7 @@
 
 Visualizador de cuerpos celestes desarrollado en Rust sobre un **software renderer**. Todos los colores, relieves visuales y patrones se calculan proceduralmente mediante shaders: el proyecto no utiliza texturas, imágenes de superficie ni mapas de materiales.
 
-El laboratorio incluye los tres cuerpos requeridos —Sol, planeta rocoso y gigante gaseoso—, dos diseños adicionales —CORE y Droid— y una luna independiente que orbita el gigante gaseoso.
+El laboratorio incluye los tres cuerpos requeridos —Sol, planeta rocoso y gigante gaseoso—, dos diseños adicionales —CORE y Droid— y una luna independiente que orbita el planeta rocoso.
 
 ## Ejecución
 
@@ -30,8 +30,8 @@ Los nombres en español `sol`, `rocoso` y `gaseoso` también son válidos.
 |---|---|
 | `1` | Mostrar el Sol |
 | `2` | Mostrar el planeta artificial CORE |
-| `3` | Mostrar el planeta rocoso |
-| `4` | Mostrar el gigante gaseoso y su luna |
+| `3` | Mostrar el planeta rocoso y su luna |
+| `4` | Mostrar el gigante gaseoso |
 | `5` | Mostrar el planeta mecánico Droid |
 | Arrastrar con clic izquierdo | Orbitar la cámara |
 | Rueda del mouse | Acercar o alejar la cámara |
@@ -63,7 +63,7 @@ La iluminación, el ruido, el dithering y los efectos animados se calculan por f
 - `Droid_confed.obj`: geometría del planeta mecánico Droid.
 - `moon.obj`: modelo separado para la luna. Se renderiza como otro objeto, con escala, transformación, órbita y shader propios.
 
-La luna rota y se traslada alrededor del gigante gaseoso en tiempo real, cumpliendo la recomendación de no integrarla en la misma malla del planeta.
+La luna rota y se traslada alrededor del planeta rocoso en tiempo real, cumpliendo la recomendación de no integrarla en la misma malla del planeta.
 
 ## Screenshots
 
@@ -71,13 +71,13 @@ La luna rota y se traslada alrededor del gigante gaseoso en tiempo real, cumplie
 
 ![Sol procedural con plasma, filamentos y erupciones](screenshots/sun.png)
 
-### Planeta rocoso
+### Planeta rocoso con luna
 
-![Planeta rocoso procedural con montañas, erosión y cráteres](screenshots/rocky.png)
+![Planeta rocoso procedural con montañas, erosión, cráteres y una luna independiente](screenshots/rocky_moon.png)
 
-### Gigante gaseoso con luna
+### Gigante gaseoso
 
-![Gigante gaseoso procedural acompañado por una luna independiente](screenshots/gas_moon.png)
+![Gigante gaseoso procedural con bandas y huracanes](screenshots/gas.png)
 
 ### Planeta artificial CORE
 
@@ -92,7 +92,7 @@ La luna rota y se traslada alrededor del gigante gaseoso en tiempo real, cumplie
 El programa puede guardar una captura automáticamente después de estabilizar la animación:
 
 ```bash
-cargo run -- --planet gas --capture screenshots/gas_moon.png
+cargo run -- --planet rocky --capture screenshots/rocky_moon.png
 ```
 
 Para comparar el resultado sin dithering:
