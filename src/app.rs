@@ -9,6 +9,9 @@ use raylib::prelude::*;
 
 const WINDOW_SCALE: i32 = 2;
 const SUN_RADIUS: f32 = 1.75;
+const MOON_RADIUS: f32 = 0.42;
+const MOON_ORBIT_RADIUS: f32 = 2.75;
+const MOON_ORBIT_SPEED: f32 = 0.25;
 const ROTATION_SPEED: f32 = 0.24;
 const INITIAL_CAMERA_DISTANCE: f32 = 6.2;
 const MIN_CAMERA_DISTANCE: f32 = 3.4;
@@ -18,6 +21,7 @@ const ORBIT_SENSITIVITY: f32 = 0.008;
 const ZOOM_STEP: f32 = 0.6;
 const MAX_ORBIT_PITCH: f32 = 1.35;
 const PLANET_OBJ: &str = include_str!("../assets/models/Planet.obj");
+const MOON_OBJ: &str = include_str!("../assets/models/moon.obj");
 const CORE_OBJ: &str = include_str!("../assets/models/CORE_.obj");
 const DROID_OBJ: &str = include_str!("../assets/models/Droid_confed.obj");
 
@@ -28,6 +32,19 @@ enum PlanetSelection {
     Rocky,
     Gas,
     Droid,
+}
+
+impl PlanetSelection {
+    fn from_name(name: &str) -> Option<Self> {
+        match name.to_ascii_lowercase().as_str() {
+            "sun" | "sol" => Some(Self::Sun),
+            "core" => Some(Self::Core),
+            "rocky" | "rocoso" => Some(Self::Rocky),
+            "gas" | "gaseoso" => Some(Self::Gas),
+            "droid" => Some(Self::Droid),
+            _ => None,
+        }
+    }
 }
 
 fn orbit_position(yaw: f32, pitch: f32, distance: f32) -> Vec3 {
@@ -47,10 +64,16 @@ impl App {
     }
 
     pub fn run(&mut self) {
-        let capture_path = std::env::args()
-            .skip_while(|argument| argument != "--capture")
-            .nth(1);
-        let start_without_dithering = std::env::args().any(|argument| argument == "--no-dither");
+        let arguments: Vec<String> = std::env::args().collect();
+        let capture_path = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "--capture")
+            .map(|pair| pair[1].clone());
+        let requested_selection = arguments
+            .windows(2)
+            .find(|pair| pair[0] == "--planet")
+            .and_then(|pair| PlanetSelection::from_name(&pair[1]));
+        let start_without_dithering = arguments.iter().any(|argument| argument == "--no-dither");
         let (mut rl, thread) = raylib::init()
             .size(
                 FRAMEBUFFER_WIDTH as i32 * WINDOW_SCALE,
@@ -71,6 +94,7 @@ impl App {
         texture.set_texture_filter(&thread, TextureFilter::TEXTURE_FILTER_POINT);
 
         let sun = load_normalized(PLANET_OBJ).expect("no se pudo cargar assets/models/Planet.obj");
+        let moon = load_normalized(MOON_OBJ).expect("no se pudo cargar assets/models/moon.obj");
         let core = load_normalized(CORE_OBJ).expect("no se pudo cargar assets/models/CORE_.obj");
         let droid =
             load_normalized(DROID_OBJ).expect("no se pudo cargar assets/models/Droid_confed.obj");
@@ -98,6 +122,12 @@ impl App {
             shader: ShaderKind::GasPlanet,
             outline: false,
         };
+        let moon_material = Material {
+            base_color: Vec3::new(0.54, 0.55, 0.58),
+            emissive: Vec3::default(),
+            shader: ShaderKind::Moon,
+            outline: true,
+        };
         let droid_material = Material {
             base_color: Vec3::new(0.46, 0.48, 0.52),
             emissive: Vec3::default(),
@@ -119,7 +149,7 @@ impl App {
         let mut orbit_yaw = 0.0_f32;
         let mut orbit_pitch = 0.0_f32;
         let mut camera_distance = INITIAL_CAMERA_DISTANCE;
-        let mut selection = PlanetSelection::Droid;
+        let mut selection = requested_selection.unwrap_or(PlanetSelection::Droid);
         let mut sun_heat_haze = true;
         let mut rendered_frames = 0_u32;
 
@@ -197,13 +227,32 @@ impl App {
                 PlanetSelection::Gas => (&sun, gas_material),
                 PlanetSelection::Droid => (&droid, droid_material),
             };
-            let objects = [RenderObject {
+            let mut objects = vec![RenderObject {
                 mesh,
                 model_matrix,
                 material,
                 bounding_radius: SUN_RADIUS,
                 lod: None,
             }];
+            if selection == PlanetSelection::Gas {
+                let moon_angle = effect_time * MOON_ORBIT_SPEED;
+                let moon_position = Vec3::new(
+                    moon_angle.cos() * MOON_ORBIT_RADIUS,
+                    moon_angle.sin() * 0.45,
+                    moon_angle.sin() * MOON_ORBIT_RADIUS,
+                );
+                let moon_model_matrix = Mat4::translation(moon_position)
+                    * Mat4::rotation_y(-rotation * 1.8)
+                    * Mat4::rotation_x(0.12)
+                    * Mat4::scale(Vec3::new(MOON_RADIUS, MOON_RADIUS, MOON_RADIUS));
+                objects.push(RenderObject {
+                    mesh: &moon,
+                    model_matrix: moon_model_matrix,
+                    material: moon_material,
+                    bounding_radius: MOON_RADIUS,
+                    lod: None,
+                });
+            }
             renderer.render(&objects, &camera, effect_time);
 
             texture

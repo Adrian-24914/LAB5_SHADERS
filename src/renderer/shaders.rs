@@ -406,6 +406,42 @@ fn shade_rocky_planet(input: &ShadeInput) -> Surface {
     Surface { color, intensity }
 }
 
+fn shade_moon(input: &ShadeInput) -> Surface {
+    let direction = input.fragment.local_position.normalize();
+    let broad = fbm(direction * 2.7 + Vec3::new(4.2, -1.7, 8.1));
+    let fine = value_noise(direction * 38.0 + Vec3::new(-3.0, 5.0, 2.0));
+
+    // Capa 1: regolito gris con variacion mineral de grano fino.
+    let regolith_dark = input.material.base_color * 0.58;
+    let regolith_light = input.material.base_color * 1.18;
+    let mut color = mix(regolith_dark, regolith_light, 0.35 + fine * 0.65);
+
+    // Capa 2: mares basalticos extensos definidos por ruido de baja frecuencia.
+    let maria = smoothstep(0.58, 0.73, broad);
+    let basalt = Vec3::new(0.16, 0.18, 0.22);
+    color = mix(color, basalt, maria * 0.78);
+
+    // Capa 3: cuencas de impacto oscuras repartidas por toda la superficie.
+    let (mut bowls, mut rims, mut ejecta) = (0.0_f32, 0.0_f32, 0.0_f32);
+    for &(center, radius) in rocky_craters() {
+        let (bowl, rim, ray) = crater_field(direction, center, radius * 0.78);
+        bowls = bowls.max(bowl);
+        rims = rims.max(rim);
+        ejecta = ejecta.max(ray);
+    }
+    color = mix(color, Vec3::new(0.055, 0.065, 0.085), bowls * 0.92);
+
+    // Capa 4: bordes elevados y rayos de eyeccion claros alrededor de los crateres.
+    let highland = Vec3::new(0.82, 0.84, 0.86);
+    color = mix(color, highland, rims * 0.82);
+    color = mix(color, highland * 0.88, ejecta * 0.42);
+
+    let light = lit_intensity(input);
+    let relief = (fine - 0.5) * 0.16 + rims * 0.20 - bowls * 0.16;
+    let intensity = (light * (0.72 + relief)).clamp(0.14, 0.92);
+    Surface { color, intensity }
+}
+
 fn core_projection(point: Vec3) -> Vec2 {
     let direction = point.normalize();
     let (ax, ay, az) = (direction.x.abs(), direction.y.abs(), direction.z.abs());
@@ -670,6 +706,7 @@ pub enum ShaderKind {
     EtaPlayer,
     GasPlanet,
     Lambert,
+    Moon,
     Rocky,
     RockyPlanet,
     Lava,
@@ -686,6 +723,7 @@ pub fn shade(input: &ShadeInput) -> Surface {
         ShaderKind::EtaPlayer => shade_eta_player(input),
         ShaderKind::GasPlanet => shade_gas_planet(input),
         ShaderKind::Lambert => shade_lambert(input),
+        ShaderKind::Moon => shade_moon(input),
         ShaderKind::Rocky => shade_rocky(input),
         ShaderKind::RockyPlanet => shade_rocky_planet(input),
         ShaderKind::Lava => shade_lava(input),
